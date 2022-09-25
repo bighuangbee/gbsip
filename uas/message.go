@@ -3,7 +3,6 @@ package uas
 import (
 	"demo/gb"
 	"errors"
-	"fmt"
 	"github.com/jart/gosip/sip"
 	"net"
 )
@@ -15,48 +14,46 @@ type UacRequest struct {
 }
 
 //User Agent Client 经过sip库解析
-type SipMsg struct {
+type UacMsg struct {
 	uac *net.UDPAddr	//IPC连接地址
 	msg *sip.Msg
 }
 
 
-func (this *UacRequest) ToSipMsg()(*SipMsg, error){
+func (this *UacRequest) ToUacMsg()(*UacMsg, error){
 	sipMsg, err := sip.ParseMsg(this.message)
 	if err != nil{
 		return nil, err
 	}
-	return &SipMsg{uac: this.uac, msg: sipMsg}, nil
+	return &UacMsg{uac: this.uac, msg: sipMsg}, nil
 }
 
 
 
-func (this *UdpServer)Keepalive(uacMsg *SipMsg)error{
+func (this *UdpServer)Keepalive(uacMsg *UacMsg)error{
 	respone := uacMsg
 	respone.msg.Status = sip.StatusOK
 	respone.msg.Payload = nil
 
-	fmt.Println("-------Keepalive Respone:", respone.msg)
-	if err := this.WriteUac(respone); err != nil{
+	if err := this.WriteToUac(respone); err != nil{
 		return errors.New("Keepalive " + err.Error())
 	}
 	return nil
 }
 
-func (this *UdpServer)Register(uacMsg *SipMsg)error{
+func (this *UdpServer)Register(uacMsg *UacMsg)error{
 	respone := uacMsg
 	respone.msg.Status = sip.StatusOK
 
 	//回复
-	fmt.Println("-------Register Respone:", respone.msg.String())
-	if err := this.WriteUac(respone); err != nil{
+	if err := this.WriteToUac(respone); err != nil{
 		return errors.New("WriteToUDP " + err.Error())
 	}
 	return nil
 }
 
 //向UAC发送catalog请求
-func (this *UdpServer)Catalog(uacMsg *SipMsg, catalog *gb.Query)error{
+func (this *UdpServer)Catalog(uacMsg *UacMsg, catalog *gb.Query)error{
 
 	queryCatalog := uacMsg.msg.Copy()
 	queryCatalog.Method = sip.MethodMessage
@@ -73,8 +70,7 @@ func (this *UdpServer)Catalog(uacMsg *SipMsg, catalog *gb.Query)error{
 		D: gb.Marshal(catalog),
 	}
 
-	fmt.Println("-------Query Catalog:", uacMsg.msg.String())
-	if err := this.WriteUac(&SipMsg{
+	if err := this.WriteToUac(&UacMsg{
 		uac: uacMsg.uac,
 		msg: queryCatalog,
 	}); err != nil{

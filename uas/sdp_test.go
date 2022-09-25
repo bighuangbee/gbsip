@@ -1,6 +1,7 @@
 package uas
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/jart/gosip/sdp"
 	"testing"
@@ -44,11 +45,12 @@ func Test_Play(t *testing.T) {
 		return
 	}
 
+	fmt.Println("======playSdp:\n",playSdp.Origin)
+
+	s, _ := json.Marshal(&playSdp)
+	fmt.Println("--playSdp.Video.Proto,", string(s))
 
 
-	fmt.Println("playSdp:", playSdp)
 
-	fmt.Println("--playSdp.Video.Proto,", playSdp.Origin.Addr, playSdp.Addr, playSdp.Video.Port )
-	fmt.Println("--playSdp.Video.Port,", playSdp.Origin.User, playSdp.Origin.ID, playSdp.Origin.Version)
 }
 

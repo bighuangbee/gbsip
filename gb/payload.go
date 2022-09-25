@@ -8,6 +8,7 @@ const EncodeUTF8 = "UTF-8"
 const EncodeGB2312 = "GB2312"
 
 const MANSCDP = "Application/MANSCDP+xml"
+const SDP = "application/sdp"
 
 const Header = `<?xml version="1.0" encoding="%s"?>` + "\n"
 
@@ -60,3 +61,10 @@ type Channelnfo struct {
 	DownloadSpeed string
 }
 
+//请求实时播放
+type PlayReq struct {
+	DeviceId string
+	ChannelId string
+	Addr	string
+	Port	uint16
+}
