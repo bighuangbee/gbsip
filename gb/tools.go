@@ -6,6 +6,7 @@ import (
 	"strconv"
 )
 
+// IETF RFC3261 这个branch参数的值必须用”z9hG4bK”打头
 func GenBranch()string{
 	return "z9hG4bK"+tools.Rand(32)
 }

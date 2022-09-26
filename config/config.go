@@ -7,7 +7,7 @@ type SysConf struct {
 }
 
 type Server struct {
-	UpdAddr string
+	UpdPort  uint16
 	HttpAddr string
 }
 

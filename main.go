@@ -9,8 +9,8 @@ import (
 func main(){
 	sysConf := config.SysConf{
 		Server:  &config.Server{
-			UpdAddr: ":5050",
-			HttpAddr: "192.168.80.107",
+			UpdPort:  5050,
+			HttpAddr: "192.168.80.107",	//
 		},
 		GB28181: &config.GB28181{
 			SipId:     "37070000082008000001",

@@ -12,7 +12,7 @@ import (
 func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err error){
 	ssrc := this.GenSSRC(1)
 
-	playSdp := sdp.New(uacMsg.uac)
+	playSdp := sdp.New(uacMsg.uacConn)
 	playSdp.Origin = sdp.Origin{
 		User:    this.sysConf.GB28181.SipId,
 		Addr: this.sysConf.Server.HttpAddr,
@@ -42,11 +42,11 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.CallID = tools.Rand(32)
 	sipPlay.CSeq = 12
 	sipPlay.Request = &sip.URI{
-		User:   req.DeviceId,
+		User:   req.ChannelId,
 		Host:   this.sysConf.Server.HttpAddr,
 	}
 
-	sipPlay.Subject = fmt.Sprintf("%s:%s,%s:%s", req.DeviceId, ssrc, this.sysConf.GB28181.SipId, ssrc)
+	sipPlay.Subject = fmt.Sprintf("%s:%s,%s:%s", req.ChannelId, ssrc, this.sysConf.GB28181.SipId, ssrc)
 	//sipPlay.Via = uacMsg.msg.Via //branch事务ID
 	sipPlay.Via = &sip.Via{
 		Protocol: "SIP",
@@ -56,7 +56,7 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 		Port:      req.Port,
 		Param:     &sip.Param{
 			Name:  "branch",
-			Value: gb.GenBranch(),// IETF RFC3261 这个branch参数的值必须用”z9hG4bK”打头
+			Value: gb.GenBranch(),
 			Next: &sip.Param{Name: "rport"},
 		},
 	}
@@ -70,7 +70,7 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.CSeqMethod = "INVITE"
 	sipPlay.To = &sip.Addr{
 		Uri:     &sip.URI{
-			User:   req.DeviceId,
+			User:   req.ChannelId,
 			Host:   req.Addr,
 			Port:   req.Port,
 		},
@@ -89,8 +89,24 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.Contact = sipPlay.From
 
 	return gb.SsrcTostreamId(ssrc), this.WriteToUac(&UacMsg{
-		uac: uacMsg.uac,
-		msg: sipPlay,
+		uacConn: uacMsg.uacConn,
+		msg:     sipPlay,
 	})
 
+}
+
+func (this *UdpServer)PlayRespone(uacMsg *UacMsg)(err error){
+	m := uacMsg.msg.Copy()
+	m.Request = m.From.Uri
+	m.Status = 0
+	m.Method = "ACK"
+	m.CSeqMethod = "ACK"
+	m.Payload = nil
+	m.From.Uri.User = this.sysConf.GB28181.SipId
+	m.Via.Port = this.sysConf.Server.UpdPort
+
+	return this.WriteToUac(&UacMsg{
+		uacConn: uacMsg.uacConn,
+		msg:     m,
+	})
 }
