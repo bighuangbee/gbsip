@@ -29,7 +29,7 @@ func (this *ChannelRepo) List(ctx context.Context, deviceId string)(list []domai
 //插入或更新
 func (this *ChannelRepo) Save(ctx context.Context, data *domain.Channel) (err error){
 	return this.Data.DB(ctx).Clauses(clause.OnConflict{
-		//Columns:   []clause.Column{{Name: "deviceId"}}, //  唯一索引
+		Columns:   []clause.Column{{Name: "deviceId"}, {Name: "channelId"}}, //  唯一索引
 		DoUpdates: clause.AssignmentColumns([]string{"name", "manufacturer", "model", "status", "host_address", "ip", "port", "expires", "charset", "updated_at", "deleted_at"}), // 更新哪些字段
 	}).Create(data).Error
 }

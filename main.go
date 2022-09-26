@@ -117,7 +117,7 @@ func streams(c *gin.Context) {
 			Hls:        fmt.Sprintf("http://%s:%d/rtp/%s/hls.m3u8", uasServer.SysConf.Media.Addr, uasServer.SysConf.Media.Port, streamId),
 			Rtmp:       "",
 			Rtsp:       "",
-			Wsflv:      "",
+			Wsflv:      fmt.Sprintf("ws://%s:%d/rtp/%s.live.flv", uasServer.SysConf.Media.Addr, uasServer.SysConf.Media.Port, streamId),
 			Stream:     0,
 		}
 
