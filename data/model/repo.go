@@ -7,4 +7,5 @@ import (
 type Repo struct {
 	Device domain.IDeviceRepo
 	Channel domain.IChannelRepo
+	Stream domain.IStreamsRepo
 }

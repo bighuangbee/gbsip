@@ -1,31 +1,31 @@
 package uas
 
 import (
-	"gosip/config"
-	"gosip/data/model"
-	"gosip/gb"
-	"gosip/data"
-	"gosip/tools"
-	"gosip/tools/log"
+	"context"
 	"errors"
 	"fmt"
 	"github.com/jart/gosip/sdp"
 	"github.com/jart/gosip/sip"
+	"gosip/config"
+	"gosip/data"
+	"gosip/data/model"
+	"gosip/gb"
+	"gosip/tools"
+	"gosip/tools/log"
 	"net"
 	"strconv"
 	"sync"
-	"time"
 )
 
 const bufferSize uint16 = 65535 - 20 - 8 // IPv4 max size - IPv4 Header size - UDP Header size
 const messagePoolSize = 1000
 
 type UdpServer struct {
-	sysConf *config.SysConf
+	SysConf     *config.SysConf
 	messagePool chan *UacRequest //消息池
-	UDPConn *net.UDPConn         //UDP服务-连接
-	UDPAddr *net.UDPAddr		//UDP服务-地址
-	ssrc int
+	UDPConn     *net.UDPConn         //UDP服务-连接
+	UDPAddr     *net.UDPAddr		//UDP服务-地址
+	ssrc        int
 
 	UacManager UacManager //IPC连接集合
 
@@ -35,7 +35,7 @@ type UdpServer struct {
 }
 
 func NewUdpServer(sysConf *config.SysConf) *UdpServer {
-	server :=  &UdpServer{sysConf: sysConf,
+	server :=  &UdpServer{SysConf: sysConf,
 		messagePool: make(chan *UacRequest, messagePoolSize),
 		UacManager: &UacConn{
 			m:   sync.RWMutex{},
@@ -63,6 +63,7 @@ func NewUdpServer(sysConf *config.SysConf) *UdpServer {
 	server.Repo = &model.Repo{
 		Device:  &model.DeviceRepo{Data: server.data},
 		Channel: &model.ChannelRepo{Data: server.data},
+		Stream: &model.StreamRepo{Data: server.data},
 	}
 
 
@@ -84,7 +85,7 @@ func (this *UdpServer) GenSSRC(isRTP int)string{
 }
 
 func (this *UdpServer)Run(){
-	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf(":%d", this.sysConf.Server.UpdPort))
+	udpAddr, err := net.ResolveUDPAddr("udp", fmt.Sprintf(":%d", this.SysConf.Server.UpdPort))
 	if err != nil {
 		panic(err)
 	}
@@ -139,20 +140,19 @@ func (this *UdpServer) requestHandler(){
 }
 
 
-var f = true
 func (this *UdpServer)distribute(uacMsg *UacMsg)(err error){
 
 	if uacMsg.msg.Method == sip.MethodRegister{
 		err = this.Register(uacMsg)
 
-		time.AfterFunc(time.Second, func() {
-			streamId, _ := this.Play(uacMsg, &gb.PlayReq{
-				ChannelId:  uacMsg.msg.From.Uri.User,
-				Addr:      uacMsg.msg.Request.Host,
-				Port:      uacMsg.msg.Request.Port,
-			})
-			fmt.Println("------------------streamId:",streamId)
-		})
+		//time.AfterFunc(time.Second, func() {
+		//	streamId, _ := this.Play(uacMsg.uacConn, &gb.PlayReq{
+		//		ChannelId:  uacMsg.msg.From.Uri.User,
+		//		Addr:      uacMsg.msg.Request.Host,
+		//		Port:      uacMsg.msg.Request.Port,
+		//	})
+		//	fmt.Println("------------------streamId:",streamId)
+		//})
 	}else {
 		if uacMsg.msg.Payload != nil {
 			payload := uacMsg.msg.Payload.Data()
@@ -180,17 +180,22 @@ func (this *UdpServer)distribute(uacMsg *UacMsg)(err error){
 					}
 
 
-					if !f {
-						return
+					deviceId := uacMsg.msg.From.Uri.User
+					_, total, err := this.Repo.Channel.List(context.Background(), deviceId)
+					fmt.Println("-------------- ", err, total, deviceId)
+					if err != nil{
+						return err
 					}
-					f = true
-					err = this.Catalog(uacMsg, &gb.Query{
-						Payload: gb.Payload{
-							CmdType:  "Catalog",
-							SN:       base.SN,
-							DeviceID: uacMsg.msg.From.Uri.User,
-						},
-					})
+					if total == 0{
+						err = this.Catalog(uacMsg, &gb.Query{
+							Payload: gb.Payload{
+								CmdType:  gb.CmdTypeCatalog,
+								SN:       base.SN,
+								DeviceID: deviceId,
+							},
+						})
+					}
+
 
 					//todo 认证、存储
 				}

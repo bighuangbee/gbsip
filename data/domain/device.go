@@ -7,16 +7,16 @@ import (
 
 type IDeviceRepo interface {
 	//设备列表
-	List(ctx context.Context)(list []Devices, total int64, err error)
+	List(ctx context.Context)(list []Device, total int64, err error)
 	//插入或更新
-	Save(ctx context.Context, data *Devices) (err error)
+	Save(ctx context.Context, data *Device) (err error)
 	//新增
-	Create(ctx context.Context, data *Devices) (err error)
+	Create(ctx context.Context, data *Device) (err error)
 	//获取详情
-	GetByDeviceId(ctx context.Context, deviceId string) (devices *Devices, err error)
+	GetByDeviceId(ctx context.Context, deviceId string) (devices *Device, err error)
 }
 
-type Devices struct {
+type Device struct {
 	Id int64 `json:"id,omitempty"`
 	DeviceId string `json:"deviceId,omitempty"` // 国标设备id
 	Name string `json:"name,omitempty"` // 国标设备名称

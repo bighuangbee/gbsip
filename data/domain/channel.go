@@ -7,16 +7,22 @@ import (
 
 type IChannelRepo interface {
 	//列表
-	List(ctx context.Context)(list []Channels, total int64, err error)
-	//插入或更新
-	Save(ctx context.Context, data *Channels) (err error)
+	List(ctx context.Context, deviceId string)(list []Channel, total int64, err error)
+	//插入或更新GetByDeviceId
+	Save(ctx context.Context, data *Channel) (err error)
 	//新增
-	Create(ctx context.Context, data *Channels) (err error)
+	Create(ctx context.Context, data *Channel) (err error)
 	//获取详情
-	GetByDeviceId(ctx context.Context, deviceId string, channelId string) (data *Channels, err error)
+	GetByDeviceId(ctx context.Context, deviceId string, channelId string) (data *Channel, err error)
 }
 
-type Channels struct {
+type ChannelQuery struct {
+	Id        int64  `json:"id,omitempty"`
+	DeviceId  string `json:"deviceId,omitempty"`
+	ChannelId string `json:"channelId,omitempty"`
+}
+
+type Channel struct {
 	Id int64 `json:"id,omitempty"`
 	DeviceId string `json:"deviceId,omitempty"` // 国标设备id
 	ChannelId string `json:"channelId,omitempty"` // 国标通道id

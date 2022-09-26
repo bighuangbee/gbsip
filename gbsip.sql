@@ -58,3 +58,23 @@ create table channels
         unique (device_id, channel_id, deleted_at)
 ) collate = utf8mb4_general_ci;
 
+
+create table streams(
+    id         bigint unsigned auto_increment primary key,
+    t          int          null,
+    device_id   varchar(255) null,
+    channel_id  varchar(255) null,
+    stream_type varchar(255) null,
+    status     int          null,
+    callid     varchar(255) null,
+    stop       tinyint(1)   null,
+    msg        varchar(255) null,
+    cseqno     int unsigned null,
+    streamid   varchar(255) null,
+    hls       varchar(255) null,
+    rtmp       varchar(255) null,
+    rtsp       varchar(255) null,
+    wsflv      varchar(255) null,
+    stream     tinyint(1)   null comment '1=实时流，0=历史流'
+);
+

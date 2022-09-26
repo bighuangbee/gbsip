@@ -6,24 +6,25 @@ import (
 	"fmt"
 	"github.com/jart/gosip/sdp"
 	"github.com/jart/gosip/sip"
+	"net"
 )
 
 
-func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err error){
+func (this *UdpServer)Play(uacConn *net.UDPAddr, req *gb.PlayReq)(streamId string, err error){
 	ssrc := this.GenSSRC(1)
 
-	playSdp := sdp.New(uacMsg.uacConn)
+	playSdp := sdp.New(uacConn)
 	playSdp.Origin = sdp.Origin{
-		User:    this.sysConf.GB28181.SipId,
-		Addr: this.sysConf.Server.HttpAddr,
+		User:    this.SysConf.GB28181.SipId,
+		Addr: this.SysConf.Server.HttpAddr,
 		ID: "0",
 		Version: "0",
 	}
-	playSdp.Addr = this.sysConf.Media.Addr
+	playSdp.Addr = this.SysConf.Media.Addr
 	playSdp.Audio = nil
 	playSdp.Video = &sdp.Media{
 		Proto: "TCP/RTP/AVP",
-		Port:   this.sysConf.Media.StreamRecvPort,
+		Port:   this.SysConf.Media.StreamRecvPort,
 		Codecs:  []sdp.Codec{
 			{PT: 96, Name: "PS", Rate: 90000},
 			{PT: 98, Name: "H264", Rate: 90000},
@@ -43,10 +44,10 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.CSeq = 12
 	sipPlay.Request = &sip.URI{
 		User:   req.ChannelId,
-		Host:   this.sysConf.Server.HttpAddr,
+		Host:   this.SysConf.Server.HttpAddr,
 	}
 
-	sipPlay.Subject = fmt.Sprintf("%s:%s,%s:%s", req.ChannelId, ssrc, this.sysConf.GB28181.SipId, ssrc)
+	sipPlay.Subject = fmt.Sprintf("%s:%s,%s:%s", req.ChannelId, ssrc, this.SysConf.GB28181.SipId, ssrc)
 	//sipPlay.Via = uacMsg.msg.Via //branch事务ID
 	sipPlay.Via = &sip.Via{
 		Protocol: "SIP",
@@ -78,8 +79,8 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.From = &sip.Addr{
 		Uri:     &sip.URI{
 			Scheme: "sip",
-			User:   this.sysConf.GB28181.SipId,
-			Host:	this.sysConf.GB28181.SipDomain,
+			User:   this.SysConf.GB28181.SipId,
+			Host:	this.SysConf.GB28181.SipDomain,
 		},
 		Param:  &sip.Param{
 			Name:  "tag",
@@ -89,7 +90,7 @@ func (this *UdpServer)Play(uacMsg *UacMsg, req *gb.PlayReq)(streamId string, err
 	sipPlay.Contact = sipPlay.From
 
 	return gb.SsrcTostreamId(ssrc), this.WriteToUac(&UacMsg{
-		uacConn: uacMsg.uacConn,
+		uacConn: uacConn,
 		msg:     sipPlay,
 	})
 
@@ -102,8 +103,8 @@ func (this *UdpServer)PlayRespone(uacMsg *UacMsg)(err error){
 	m.Method = "ACK"
 	m.CSeqMethod = "ACK"
 	m.Payload = nil
-	m.From.Uri.User = this.sysConf.GB28181.SipId
-	m.Via.Port = this.sysConf.Server.UpdPort
+	m.From.Uri.User = this.SysConf.GB28181.SipId
+	m.Via.Port = this.SysConf.Server.UpdPort
 
 	return this.WriteToUac(&UacMsg{
 		uacConn: uacMsg.uacConn,

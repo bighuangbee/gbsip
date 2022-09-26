@@ -16,8 +16,8 @@ func (this *UdpServer)Catalog(uacMsg *UacMsg, catalog *gb.Query)error{
 	queryCatalog.CSeqMethod = sip.MethodMessage
 	queryCatalog.Via.Port = queryCatalog.From.Uri.Port
 	queryCatalog.Status = 0
-	queryCatalog.From.Uri.User = this.sysConf.GB28181.SipId
-	queryCatalog.From.Uri.Host = this.sysConf.GB28181.SipDomain
+	queryCatalog.From.Uri.User = this.SysConf.GB28181.SipId
+	queryCatalog.From.Uri.Host = this.SysConf.GB28181.SipDomain
 	queryCatalog.From.Uri.Port = 0
 	queryCatalog.To = uacMsg.msg.From
 	queryCatalog.To.Param = nil
@@ -44,7 +44,7 @@ func (this *UdpServer)CatalogRespone(uacMsg *UacMsg)error{
 
 	if len(catalogRespone.DeviceList.Channels) > 0{
 		c := catalogRespone.DeviceList.Channels[0]
-		device := domain.Devices{
+		device := domain.Device{
 			DeviceId:      catalogRespone.DeviceID,
 			Name:          c.Name,
 			Manufacturer:  c.Manufacturer,
@@ -62,7 +62,7 @@ func (this *UdpServer)CatalogRespone(uacMsg *UacMsg)error{
 
 		for _, channle := range catalogRespone.DeviceList.Channels {
 
-			c := domain.Channels{
+			c := domain.Channel{
 				DeviceId:      catalogRespone.DeviceID,
 				ChannelId:     c.DeviceID,
 				Name:          c.Name,
