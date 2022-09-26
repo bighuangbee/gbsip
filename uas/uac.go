@@ -15,7 +15,14 @@ func (this *Uac) Key()string {
 	return fmt.Sprintf("%s_%s", this.DeviceId, this.ChannelId)
 }
 
+
 //IPC连接集合
+type UacManager interface {
+	Get(uac *Uac) (*net.UDPAddr, bool)
+	Set(uac *Uac, uacConn *net.UDPAddr)
+}
+
+//go map存储，实现UacManager
 type UacConn struct {
 	m sync.RWMutex
 	Uac map[string]*net.UDPAddr //IPC连接集合

@@ -1,9 +1,11 @@
 package uas
 
 import (
-	"demo/gb"
+	"context"
 	"errors"
 	"github.com/jart/gosip/sip"
+	"gosip/data/domain"
+	"gosip/gb"
 )
 
 //向UAC发送catalog请求
@@ -39,12 +41,51 @@ func (this *UdpServer)CatalogRespone(uacMsg *UacMsg)error{
 	catalogRespone := &gb.CatalogResponse{}
 	gb.Unmarshal(payload, catalogRespone)
 
-	for _, channle := range catalogRespone.DeviceList.Channels {
-		this.UacConns.Set(&Uac{
-			DeviceId:  catalogRespone.DeviceID,
-			ChannelId: channle.DeviceID,
-		}, uacMsg.uacConn)
+
+	if len(catalogRespone.DeviceList.Channels) > 0{
+		c := catalogRespone.DeviceList.Channels[0]
+		device := domain.Devices{
+			DeviceId:      catalogRespone.DeviceID,
+			Name:          c.Name,
+			Manufacturer:  c.Manufacturer,
+			Model:         c.Model,
+			//Firmware:      "",
+			//Transport:     "",
+			Status:        gb.StatusMap(c.Status),
+			HostAddress:   c.IPAddress,
+			Ip:            c.IPAddress,
+			Port:          uint16(uacMsg.uacConn.Port),
+			//Expires:       0,
+			//Charset:       "",
+		}
+		this.Repo.Device.Save(context.Background(), &device)
+
+		for _, channle := range catalogRespone.DeviceList.Channels {
+
+			c := domain.Channels{
+				DeviceId:      catalogRespone.DeviceID,
+				ChannelId:     c.DeviceID,
+				Name:          c.Name,
+				Manufacturer:  c.Manufacturer,
+				Model:         c.Model,
+				//Firmware:      "",
+				//Transport:     "",
+				Status:        gb.StatusMap(c.Status),
+				HostAddress:   c.IPAddress,
+				Ip:            c.IPAddress,
+				Port:          uint16(uacMsg.uacConn.Port),
+				//Expires:       0,
+				//Charset:       "",
+			}
+			this.Repo.Channel.Save(context.Background(), &c)
+
+			this.UacManager.Set(&Uac{
+				DeviceId:  catalogRespone.DeviceID,
+				ChannelId: channle.DeviceID,
+			}, uacMsg.uacConn)
+		}
 	}
+
 
 	//回复200
 	msg := new(sip.Msg)

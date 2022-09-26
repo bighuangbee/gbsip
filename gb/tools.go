@@ -1,7 +1,7 @@
 package gb
 
 import (
-	"demo/tools"
+	"gosip/tools"
 	"fmt"
 	"strconv"
 )

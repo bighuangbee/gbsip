@@ -1,8 +1,8 @@
 package uas
 
 import (
-	"demo/gb"
-	"demo/tools"
+	"gosip/gb"
+	"gosip/tools"
 	"fmt"
 	"github.com/jart/gosip/sdp"
 	"github.com/jart/gosip/sip"

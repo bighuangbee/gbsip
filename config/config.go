@@ -4,6 +4,7 @@ type SysConf struct {
 	Server *Server
 	GB28181 *GB28181
 	Media *Media
+	Database *Database
 }
 
 type Server struct {
@@ -22,4 +23,9 @@ type Media struct{
 	Addr string
 	Port uint16
 	StreamRecvPort uint16
+}
+
+type Database struct {
+	Address, UserName, Password, DBName, Driver string
+	Timeout int
 }

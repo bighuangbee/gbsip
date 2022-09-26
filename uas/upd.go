@@ -1,9 +1,12 @@
 package uas
 
 import (
-	"demo/config"
-	"demo/gb"
-	"demo/tools"
+	"gosip/config"
+	"gosip/data/model"
+	"gosip/gb"
+	"gosip/data"
+	"gosip/tools"
+	"gosip/tools/log"
 	"errors"
 	"fmt"
 	"github.com/jart/gosip/sdp"
@@ -24,19 +27,44 @@ type UdpServer struct {
 	UDPAddr *net.UDPAddr		//UDP服务-地址
 	ssrc int
 
-	UacConns *UacConn	//IPC连接集合
+	UacManager UacManager //IPC连接集合
+
+	data *data.Data
+
+	Repo *model.Repo
 }
 
 func NewUdpServer(sysConf *config.SysConf) *UdpServer {
 	server :=  &UdpServer{sysConf: sysConf,
 		messagePool: make(chan *UacRequest, messagePoolSize),
-		UacConns: &UacConn{
+		UacManager: &UacConn{
 			m:   sync.RWMutex{},
 			Uac: make(map[string]*net.UDPAddr),
 		},
 	}
 	server.ssrc=10
 	go server.requestHandler()
+
+	logger := log.New("./logs")
+	db, err := data.New(&data.Options{
+		Address:  sysConf.Database.Address,
+		UserName: sysConf.Database.UserName,
+		Password: sysConf.Database.Password,
+		DBName:   sysConf.Database.DBName,
+		Logger:   logger,
+	})
+	if err != nil{
+		fmt.Println(err)
+		return nil
+	}
+	server.data = &data.Data{
+		Db: db,
+	}
+	server.Repo = &model.Repo{
+		Device:  &model.DeviceRepo{Data: server.data},
+		Channel: &model.ChannelRepo{Data: server.data},
+	}
+
 
 	fmt.Println("【UdpServer】Run Success, Listening Port:", sysConf.Server.UpdPort)
 	return server
@@ -119,9 +147,9 @@ func (this *UdpServer)distribute(uacMsg *UacMsg)(err error){
 
 		time.AfterFunc(time.Second, func() {
 			streamId, _ := this.Play(uacMsg, &gb.PlayReq{
-				ChannelId:  "34020000001310000001",
-				Addr:      "192.168.80.2",
-				Port:      5060,
+				ChannelId:  uacMsg.msg.From.Uri.User,
+				Addr:      uacMsg.msg.Request.Host,
+				Port:      uacMsg.msg.Request.Port,
 			})
 			fmt.Println("------------------streamId:",streamId)
 		})

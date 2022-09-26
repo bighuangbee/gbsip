@@ -1,8 +1,8 @@
 package main
 
 import (
-	"demo/config"
-	"demo/uas"
+	"gosip/config"
+	"gosip/uas"
 )
 
 
@@ -20,6 +20,14 @@ func main(){
 			Addr: "192.168.80.107",
 			Port: 8090,
 			StreamRecvPort: 10000,
+		},
+		Database: &config.Database{
+			Address:  "localhost",
+			UserName: "root",
+			Password: "Hiscene2022",
+			DBName:   "gbsip",
+			Driver:   "mysql",
+			Timeout:  10,
 		},
 	}
 

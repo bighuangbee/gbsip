@@ -68,3 +68,11 @@ type PlayReq struct {
 	Addr	string
 	Port	uint16
 }
+
+//ON、OFF
+func StatusMap(s string)uint8{
+	if s == "ON"{
+		return 1
+	}
+	return 2
+}
